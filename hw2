@@ -1,0 +1,53 @@
+import numpy as np
+A = np.array(
+    [[-1, 1, 2], 
+     [0, -1, -3], 
+     [4, -3, 2]]
+)
+B = np.array(
+    [[1],
+     [-4],
+     [7]]
+)
+
+# Напиши функцію для вирішення системи матричним методом
+def solve_inv_matrix(a, b, verbose=False):
+    A = a
+    B = b
+    if A.shape[0] != A.shape[1]:
+      raise ValueError("Матриця коефіцієнтів не квадратна")
+    if A.shape[0] != B.shape[0]:
+      raise ValueError("Розмірність матриці коефіцієнтів і вектора вільних членів не співпадає")
+    det_A = round(np.linalg.det(A))
+    if det_A == 0:
+      return("Визначник матриці = 0, тож матриця вироджена і оберненої до неї не існує. Спробуйте інший метод")
+    A_inv = np.linalg.inv(A)
+    # Обчислення вектора розв'язків
+    X = np.matmul(A_inv, B)
+    return X
+
+print(f"Вектор рішення: \r\n {solve_inv_matrix(A, B)}")
+
+# Напиши функцію для вирішення системи методом Крамера
+def solve_cramer(a, b, verbose=False):
+    A = a
+    B = b
+    if A.shape[0] != A.shape[1]:
+      raise ValueError("Матриця коефіцієнтів не квадратна")
+    if A.shape[0] != B.shape[0]:
+      raise ValueError("Розмірність матриці коефіцієнтів і вектора вільних членів не співпадає")
+    det_A = round(np.linalg.det(A))
+    if det_A == 0:
+      return("Визначник матриці = 0, а ми не можемо ділити на 0. Спробуйте інший метод")
+
+    det_A = round(np.linalg.det(A))
+
+    # Обчислення визначників матриць з заміненими стовпчиками
+    det_X = np.array([np.linalg.det(np.column_stack((A[:, :i], B, A[:, i+1:])))
+                    for i in range(A.shape[0])])
+    # Обчислення вектора розв'язків
+    X = det_X / det_A
+
+    return X.reshape(-1, 1)
+
+print(f"Вектор рішення: \r\n {solve_cramer(A, B)}")
