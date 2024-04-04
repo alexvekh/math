@@ -1,54 +1,123 @@
-import math
+import plotly.graph_objects as go
 import numpy as np
+from numpy import linalg as LA
 
-M_0 = np.array([0, 0, 0])
-M_1 = np.array([1, 1/3, 0])
-M_2 = np.array([0, 2, 1/4])
-M_3 = np.array([1/2, 1/2, 1])
+m0 = np.array([0, 0, 0])
+m1 = np.array([2, 1, 0])
+m2 = np.array([0, 3, 1])
+m3 = np.array([1/2, 1/2, 1])
 
-# Вектори
-a = M_1 - M_0
-b = M_2 - M_0
-c = M_3 - M_0
-print(a, b, c)
+a = m1 - m0
+b = m2 - m0
+c = m3 - m0
 
-# Об'єм
-V = np.abs(np.dot(a, np.cross(b, c)))
-# V = linalg.det(np.dstack([a,b,c]))[0]
-
-
-# Площа
-S = 2 * (np.linalg.norm(np.cross(b, c)) + np.linalg.norm(np.cross(a, c)) + np.linalg.norm(np.cross(a, b)))
-print("S:", S)
-
-# Кути
-cos_alpha = np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
-cos_beta = np.dot(a, c) / (np.linalg.norm(a) * np.linalg.norm(c))
-cos_gamma = np.dot(b, c) / (np.linalg.norm(b) * np.linalg.norm(c))
-print("coss:", cos_alpha, cos_beta, cos_gamma)
+# Знайдемо координати інших вершин паралелепіпеда, враховуючи рівність координат векторів, що утворюють протилежні грані,
+# оскільки в паралелепіпеда протилежні грані паралельні і рівні, отже вектори, що їх утворюють колінеарні і мають рівні модулі
+m4 = m0 + a + b
+m5 = m0 + a + c
+m6 = m0 + b + c
+m7 = m0 + a + b + c
 
 
-alpha_radians = np.arccos(cos_alpha)
-beta_radians = np.arccos(cos_beta)
-gamma_radians = np.arccos(cos_gamma)
+#Візуілізуємо вершини
+vertices = np.array([m0, m1, m2, m3, m4, m5, m6, m7])
+fig = go.Figure()
+fig.add_trace(go.Scatter3d(
+    x=vertices[:, 0], y=vertices[:, 1], z=vertices[:, 2],
+    mode='markers+text',
+    marker=dict(
+        size=5,
+        color='palevioletred'),
+    text=['m0', 'm1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7'],
+    textposition="bottom center",
+    showlegend=False
+))
 
-alpha = math.degrees(alpha_radians)
-beta = math.degrees(beta_radians)
-gamma = math.degrees(gamma_radians)
 
-# Координати решти вершин
-M_4 = a + b
-M_5 = b + c
-M_6 = a + c
-M_7 = a + b + c
+#Візуілізуємо вектори a,b,c із підписами
+edges_solid = [m1,m2,m3]
+for i, edge in enumerate(edges_solid):
+    fig.add_trace(go.Scatter3d(
+        x=[m0[0], edge[0]], y=[m0[1], edge[1]], z=[m0[2],edge[2]],
+        mode='lines',
+        line=dict(color='maroon', width=3),
+        showlegend=False
+    ))
+
+    mid_point = edge / 2
+    fig.add_trace(go.Scatter3d(
+        x=[mid_point[0]], y=[mid_point[1]], z=[mid_point[2]],
+        text=['a', 'b', 'c'][i],
+        mode='text',
+        showlegend=False
+    ))
 
 
-print("Об'єм паралелепіпеда:", V)
-print("Площа повної поверхні паралелепіпеда:", S)
-print("Косинуси кутів:", cos_alpha, cos_beta, cos_gamma)
-print("Кути:", alpha, beta, gamma)
-print("Координати решти вершин паралелепіпеда:")
-print("              M_4:  ", M_4)
-print("              M_5:  ", M_5)
-print("              M_6:  ", M_6)
-print("              M_7:  ", M_7)
+#Додамо конуси-напрямки векторів
+for i, edge in enumerate(edges_solid):
+    fig.add_trace(go.Cone(
+        x=[edge[0]*0.95], y=[edge[1]*0.95], z=[edge[2]*0.95],
+        u=[edge[0]], v=[edge[1]], w=[edge[2]],
+        sizemode="absolute",
+        sizeref=0.1,
+        showscale=False
+    ))
+
+
+#Додамо вектори-ребра паралелепіпеда, що не були задані за умовою
+edges_dotted = [
+    [m1, m4],
+    [m1, m5],
+    [m2, m4],
+    [m2, m6],
+    [m3, m5],
+    [m3, m6],
+    [m4, m7],
+    [m5, m7],
+    [m6, m7]
+]
+
+for edge in edges_dotted:
+    edge_points = np.array(edge)
+    fig.add_trace(go.Scatter3d(
+        x=edge_points[:, 0], y=edge_points[:, 1], z=edge_points[:, 2],
+        mode='lines',
+        line=dict(color='darkolivegreen', width=3, dash='dash'),
+        showlegend=False
+    ))
+
+
+#Назви вісей координат
+fig.update_layout(scene = dict(
+                    xaxis_title='Вісь X',
+                    yaxis_title='Вісь Y',
+                    zaxis_title='Вісь Z'))
+
+#Розфарбуємо фон
+fig.update_layout(scene = dict(
+                    xaxis = dict(
+                         backgroundcolor="rgb(200, 200, 230)",
+                         gridcolor="white",
+                         showbackground=True,
+                         zerolinecolor="white",),
+                    yaxis = dict(
+                        backgroundcolor="rgb(230, 200,220)",
+                        gridcolor="white",
+                        showbackground=True,
+                        zerolinecolor="white"),
+                    zaxis = dict(
+                        backgroundcolor="rgb(240, 230,200)",
+                        gridcolor="white",
+                        showbackground=True,
+                        zerolinecolor="white",),),
+                    width=800,
+                    margin=dict(
+                    r=10, l=10,
+                    b=10, t=10))
+
+
+fig.update_layout(title='Візуалізація вершин паралелепіпеда', autosize=True,
+                  width=800, height=800,
+                  margin=dict(l=65, r=50, b=65, t=90))
+
+fig.show()
